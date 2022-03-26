@@ -1,0 +1,20 @@
+{
+    "model_params": {
+        "n_classes": 10, 
+        "cuda": false,
+        "num_channels": 3,
+        "models_dir": "./models/actgan",
+        "noise_size": 100
+    },
+    "classes": [
+        "airplane",
+        "automobile",
+        "bird",
+        "cat",
+        "deer",
+        "dog",
+        "frog",
+        "horse",
+        "ship",
+        "truck"]
+}
