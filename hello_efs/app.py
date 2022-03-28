@@ -22,41 +22,60 @@ FILE = Path("/mnt/lambda/file")
 def lambda_handler(event, context):
     # probabilities = model.forward(image_transforms(np.array(image)).reshape(-1, 1, 28, 28))
     # label = torch.argmax(probabilities).item()
-    model_file = 'models/cifar/G_jit_epoch_180'
-    with open('configs/cifar.json') as f:
-        cfg = json.load(f)
+    try:
+        print('Reading config')
+        model_file = 'models/cifar/G_jit_epoch_180'
+        with open('configs/cifar.json') as f:
+            cfg = json.load(f)
+    except:
+        print('Failed to load config')
+
     # model_runner = GeneratorRunner(AttrDict(config['model_params']))
 
     # model = ACGAN_Generator(config['model_params'])
     # model.load_state_dict(torch.load(model_file))
     # model.eval()
 
-    image_class = 0
+    try:
+        print('Evaluating model')
+        image_class = 0
 
-    noise = generate_noise(cfg['model_params']['noise_size'])
-    onehot = label_to_onehot(image_class, cfg['model_params']['n_classes'])
+        noise = generate_noise(cfg['model_params']['noise_size'])
+        onehot = label_to_onehot(image_class, cfg['model_params']['n_classes'])
 
 
-    model = torch.jit.load(model_file, map_location=torch.device('cpu'))
-    model.eval()
+        model = torch.jit.load(model_file, map_location=torch.device('cpu'))
+        model.eval()
 
-    result = model(noise, onehot)
+        result = model(noise, onehot)
+    except:
+        print('Failed to run model')
     # result = model_runner.evaluate(0,100,4234)
 
     # print(result)
 
 
-    result_io = io.BytesIO()
-    torchvision.utils.save_image(result, result_io, 'JPEG', quality=70)
-    # # result.save(result_io, 'JPEG', quality=70)
-    result_io.seek(0)
+    try:
+        print('Converting result to bytestream')
+        result_io = io.BytesIO()
+        torchvision.utils.save_image(result, result_io, 'JPEG', quality=70)
+        # # result.save(result_io, 'JPEG', quality=70)
+        result_io.seek(0)
+    except:
+        print("Failed to convert output to bytestream")
     
     return {
-        'headers': { "Content-Type": "image/png" },
+        'headers': { "Content-type": "image/jpeg" },
         'statusCode': 200,
         'body': base64.b64encode(result_io.getvalue()).decode('utf-8'),
         'isBase64Encoded': True
     }
+
+    # return {
+    #     'headers': {},
+    #     'statusCode': 200,
+    #     'body': model.code
+    # }
 
 
 

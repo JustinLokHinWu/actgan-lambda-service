@@ -79,8 +79,8 @@ Resources:
       - MountTargetB
     Properties:
       CodeUri: hello_efs/
-      Handler: app.lambda_handler
-      Runtime: python3.9
+      # Handler: app.lambda_handler
+      # Runtime: python3.9
       PackageType: Image
       Architectures:
         - x86_64
