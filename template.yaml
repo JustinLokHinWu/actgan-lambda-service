@@ -72,13 +72,13 @@ Resources:
           OwnerGid: "1000"
           OwnerUid: "1000"
           Permissions: "755"
-  HelloEfsFunction:
+  ActganGenerateFunction:
     Type: AWS::Serverless::Function
     DependsOn:
       - MountTargetA
       - MountTargetB
     Properties:
-      CodeUri: hello_efs/
+      # CodeUri: hello_efs/
       # Handler: app.lambda_handler
       # Runtime: python3.9
       PackageType: Image
@@ -101,14 +101,14 @@ Resources:
         HelloWorld:
           Type: Api
           Properties:
-            Path: /hello
+            Path: /generate
             Method: get
     Metadata:
       Dockerfile: Dockerfile
-      DockerContext: ./hello_efs
+      DockerContext: ./app
       DockerTag: python3.9-v1
 
 Outputs:
-  HelloEfsApi:
-    Description: "API Gateway endpoint URL for Prod stage for Hello EFS function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+  ActganGenerateApi:
+    Description: "API Gateway endpoint URL for Prod stage for ACTGAN generate image API"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/generate/"

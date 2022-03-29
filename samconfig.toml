@@ -2,11 +2,11 @@ version = 0.1
 [default]
 [default.deploy]
 [default.deploy.parameters]
-stack_name = "test-1"
+stack_name = "actgan-generate"
 s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-10i99k1xvh574"
-s3_prefix = "test-1"
+s3_prefix = "actgan-generate"
 region = "us-east-2"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 disable_rollback = true
-image_repositories = ["HelloEfsFunction=387333851898.dkr.ecr.us-east-2.amazonaws.com/samapp7427b055/helloefsfunctionaa4e1984repo"]
+image_repositories = ["ActganGenerateFunction=387333851898.dkr.ecr.us-east-2.amazonaws.com/actgangeneratef2443976/actgangeneratefunctiona53ea69drepo"]
