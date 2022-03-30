@@ -23,7 +23,6 @@ def lambda_handler(event, context):
             'body': 'Failed to get datasets'
         }
 
-    print(prefixes)
     return {
         'headers': { "content-type":"application/json" },
         'statusCode': 200,

@@ -52,6 +52,29 @@ Resources:
             RestApiId: !Ref ApiGatewayApi
             Path: /get-datasets
             Method: get
+  ActganGetClassesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: get_classes_function/
+      Handler: get_classes.lambda_handler
+      Runtime: python3.9
+      Policies:
+        - S3ReadPolicy:
+            BucketName: actgan-models
+      Environment:
+        Variables:
+          AWS_BUCKET_NAME: "actgan-models"
+      Events:
+        GetClassesEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApi
+            Path: /get-classes
+            Method: get
+            RequestParameters:
+              - method.request.querystring.dataset:
+                  Caching: true
+                  Required: true
     Architectures:
       - x86_64
     
