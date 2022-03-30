@@ -8,6 +8,9 @@ Description: >
 Globals:
   Function:
     Timeout: 10
+    Environment:
+      Variables:
+        AWS_BUCKET_NAME: "actgan-models"
 
 Resources:
   ApiGatewayApi:
@@ -42,9 +45,6 @@ Resources:
       Policies:
         - S3ReadPolicy:
             BucketName: actgan-models
-      Environment:
-        Variables:
-          AWS_BUCKET_NAME: "actgan-models"
       Events:
         GetDatasetsEvent:
           Type: Api
@@ -61,15 +61,32 @@ Resources:
       Policies:
         - S3ReadPolicy:
             BucketName: actgan-models
-      Environment:
-        Variables:
-          AWS_BUCKET_NAME: "actgan-models"
       Events:
         GetClassesEvent:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayApi
             Path: /get-classes
+            Method: get
+            RequestParameters:
+              - method.request.querystring.dataset:
+                  Caching: true
+                  Required: true
+  ActganGetEpochsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: get_epochs_function/
+      Handler: get_epochs.lambda_handler
+      Runtime: python3.9
+      Policies:
+        - S3ReadPolicy:
+            BucketName: actgan-models
+      Events:
+        GetEpochsEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApi
+            Path: /get-epochs
             Method: get
             RequestParameters:
               - method.request.querystring.dataset:
