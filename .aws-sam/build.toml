@@ -10,11 +10,20 @@ manifest_hash = ""
 packagetype = "Zip"
 functions = ["ActganGetDatasetsFunction"]
 
-[function_build_definitions.26a3a9cd-4507-4d1e-a8c6-62415874e3e3]
+[function_build_definitions.00d6d46c-6f1a-4a31-a8af-2a96ae95293a]
+codeuri = "C:\\Users\\justi\\Documents\\Projects\\actgan-lambda\\actgan-lambda-service\\get_classes_function"
+runtime = "python3.9"
+architecture = "x86_64"
+handler = "get_classes.lambda_handler"
+manifest_hash = ""
+packagetype = "Zip"
+functions = ["ActganGetClassesFunction"]
+
+[function_build_definitions.9440eb2e-fbeb-494b-a1e1-37bac797ae8a]
 packagetype = "Image"
 functions = ["ActganGenerateFunction"]
 
-[function_build_definitions.26a3a9cd-4507-4d1e-a8c6-62415874e3e3.metadata]
+[function_build_definitions.9440eb2e-fbeb-494b-a1e1-37bac797ae8a.metadata]
 Dockerfile = "Dockerfile"
 DockerContext = "C:\\Users\\justi\\Documents\\Projects\\actgan-lambda\\actgan-lambda-service\\generate_function"
 DockerTag = "python3.9-v1"

@@ -10,7 +10,6 @@ def lambda_handler(event, context):
         print('Failed to access S3 bucket')
         return {
             'statusCode': 500,
-            'body': 'Failed to access S3 bucket'
         }
 
     try:
@@ -20,7 +19,6 @@ def lambda_handler(event, context):
         print('Failed to get datasets from S3')
         return {
             'statusCode': 500,
-            'body': 'Failed to get datasets'
         }
 
     return {
