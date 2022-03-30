@@ -3,24 +3,38 @@ import os
 import boto3
 
 def lambda_handler(event, context):
-    # try:
-    #     bucket_name = os.environ['AWS_BUCKET_NAME']
-    #     s3 = boto3.client('s3')
-    #     bucket = s3.list_objects(Bucket=bucket_name, Delimiter='/')
+    try:
+        bucket_name = os.environ['AWS_BUCKET_NAME']
+        s3 = boto3.client('s3')
+    except:
+        print('Failed to access S3 bucket')
+        return {
+            'statusCode': 500,
+        }
 
-    #     prefixes = [prefix_obj.get('Prefix')[:-1] for prefix_obj in bucket.get('CommonPrefixes')]
-    # except:
-    #     print('Failed to get datasets from S3')
-    #     return {
-    #         'statusCode': 500,
-    #         'body': 'Failed to get datasets'
-    #     }
+    try:
+        dataset = event['queryStringParameters']['dataset']
+        config_object = s3.get_object(Bucket=bucket_name, Key="{}/config.json".format(dataset))
+    except:
+        print('Failed to get config for dataset "{}" from S3'.format(dataset))
+        return {
+            'statusCode': 500,
+        }
+    
+    try:
+        config = json.loads(config_object['Body'].read().decode())
+    except:
+        print('Failed to read config as json')
+        return {
+            'statusCode': 500,
+        }
 
-    # print(prefixes)
     return {
+        'headers': { "content-type":"application/json" },
         'statusCode': 200,
-        'body': prefixes
+        'body': json.dumps(config['classes'])
     }
+
 
 if __name__=='__main__':
     lambda_handler(0,0)
