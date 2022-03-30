@@ -3,6 +3,14 @@ import os
 import boto3
 
 def lambda_handler(event, context):
+    if 'dataset' in event['queryStringParameters']:
+        dataset = event['queryStringParameters']['dataset']
+    else:
+        return {
+            'statusCode': 400,
+            'body': json.dumps('Missing dataset query parameter')
+        }
+    
     try:
         bucket_name = os.environ['AWS_BUCKET_NAME']
         s3 = boto3.client('s3')
@@ -13,7 +21,6 @@ def lambda_handler(event, context):
         }
 
     try:
-        dataset = event['queryStringParameters']['dataset']
         config_object = s3.get_object(Bucket=bucket_name, Key="{}/config.json".format(dataset))
     except:
         print('Failed to get config for dataset "{}" from S3'.format(dataset))
