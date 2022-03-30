@@ -7,100 +7,26 @@ Description: >
 
 Globals:
   Function:
-    Timeout: 3
+    Timeout: 10
 
 Resources:
-  EfsLambdaVpc:
-    Type: AWS::EC2::VPC
+  ApiGatewayApi:
+    Type: AWS::Serverless::Api
     Properties:
-      CidrBlock: "10.0.0.0/16"
-  EfsLambdaSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: "EFS + Lambda on SAM Security Group"
-      VpcId: !Ref EfsLambdaVpc
-      SecurityGroupEgress:
-        - CidrIp: "0.0.0.0/0"
-          FromPort: 0
-          ToPort: 65535
-          IpProtocol: tcp
-      SecurityGroupIngress:
-        - CidrIp: "0.0.0.0/0"
-          FromPort: 0
-          ToPort: 65535
-          IpProtocol: tcp
-  EfsLambdaSubnetA:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref EfsLambdaVpc
-      AvailabilityZone: !Select [ 0, !GetAZs '' ]
-      MapPublicIpOnLaunch: false
-      CidrBlock: "10.0.0.0/24"
-  EfsLambdaSubnetB:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref EfsLambdaVpc
-      AvailabilityZone: !Select [ 1, !GetAZs '' ]
-      MapPublicIpOnLaunch: false
-      CidrBlock: "10.0.1.0/24"
-  EfsFileSystem:
-    Type: AWS::EFS::FileSystem
-  MountTargetA:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref EfsFileSystem
-      SubnetId: !Ref EfsLambdaSubnetA
-      SecurityGroups:
-        - !Ref EfsLambdaSecurityGroup
-  MountTargetB:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref EfsFileSystem
-      SubnetId: !Ref EfsLambdaSubnetB
-      SecurityGroups:
-        - !Ref EfsLambdaSecurityGroup
-  AccessPoint:
-    Type: AWS::EFS::AccessPoint
-    Properties:
-      FileSystemId: !Ref EfsFileSystem
-      PosixUser:
-        Gid: "1000"
-        Uid: "1000"
-      RootDirectory:
-        Path: "/lambda"
-        CreationInfo:
-          OwnerGid: "1000"
-          OwnerUid: "1000"
-          Permissions: "755"
+      StageName: Prod
+      BinaryMediaTypes:
+        - "*~1*"
   ActganGenerateFunction:
     Type: AWS::Serverless::Function
-    DependsOn:
-      - MountTargetA
-      - MountTargetB
     Properties:
-      # CodeUri: hello_efs/
-      # Handler: app.lambda_handler
-      # Runtime: python3.9
       PackageType: Image
       Architectures:
         - x86_64
-      Policies:
-        - EFSWriteAccessPolicy:
-            FileSystem: !Ref EfsFileSystem
-            AccessPoint: !Ref AccessPoint
-      VpcConfig:
-        SecurityGroupIds:
-          - !Ref EfsLambdaSecurityGroup
-        SubnetIds:
-          - !Ref EfsLambdaSubnetA
-          - !Ref EfsLambdaSubnetB
-      FileSystemConfigs:
-        - Arn: !GetAtt AccessPoint.Arn
-          LocalMountPath: /mnt/lambda
       Events:
         GenerateEvent:
           Type: Api
           Properties:
+            RestApiId: !Ref ApiGatewayApi
             Path: /generate
             Method: get
     Metadata:
@@ -113,15 +39,19 @@ Resources:
       CodeUri: get_datasets_function/
       Handler: get_datasets.lambda_handler
       Runtime: python3.9
+      Policies:
+        - S3ReadPolicy:
+            BucketName: actgan-models
+      Environment:
+        Variables:
+          AWS_BUCKET_NAME: "actgan-models"
+      Events:
+        GetDatasetsEvent:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayApi
+            Path: /get-datasets
+            Method: get
     Architectures:
       - x86_64
-    Events:
-      GetDatasetsEvent:
-        Type: Api
-        Properties:
-          Path: /get-datasets
-          Method: get
-Outputs:
-  ActganGenerateApi:
-    Description: "API Gateway endpoint URL for Prod stage for ACTGAN image API"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+    
