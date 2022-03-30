@@ -3,7 +3,7 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   actgan-lambda-service
 
-  Sample SAM Template for actgan-lambda-service
+  Serverless backend for serving ACTGAN generated images
 
 Globals:
   Function:
@@ -98,17 +98,30 @@ Resources:
         - Arn: !GetAtt AccessPoint.Arn
           LocalMountPath: /mnt/lambda
       Events:
-        HelloWorld:
+        GenerateEvent:
           Type: Api
           Properties:
             Path: /generate
             Method: get
     Metadata:
       Dockerfile: Dockerfile
-      DockerContext: ./app
+      DockerContext: ./generate_function
       DockerTag: python3.9-v1
-
+  ActganGetDatasetsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: get_datasets_function/
+      Handler: get_datasets.lambda_handler
+      Runtime: python3.9
+    Architectures:
+      - x86_64
+    Events:
+      GetDatasetsEvent:
+        Type: Api
+        Properties:
+          Path: /get-datasets
+          Method: get
 Outputs:
   ActganGenerateApi:
-    Description: "API Gateway endpoint URL for Prod stage for ACTGAN generate image API"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/generate/"
+    Description: "API Gateway endpoint URL for Prod stage for ACTGAN image API"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"

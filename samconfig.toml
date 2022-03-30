@@ -2,11 +2,11 @@ version = 0.1
 [default]
 [default.deploy]
 [default.deploy.parameters]
-stack_name = "actgan-generate"
-s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-10i99k1xvh574"
-s3_prefix = "actgan-generate"
+stack_name = "actgan-lambda-service"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-1lb511yqtxx9f"
+s3_prefix = "actgan-lambda-service"
 region = "us-east-2"
 confirm_changeset = true
 capabilities = "CAPABILITY_IAM"
 disable_rollback = true
-image_repositories = ["ActganGenerateFunction=387333851898.dkr.ecr.us-east-2.amazonaws.com/actgangeneratef2443976/actgangeneratefunctiona53ea69drepo"]
+image_repositories = ["ActganGenerateFunction=387333851898.dkr.ecr.us-east-2.amazonaws.com/actganlambdaservice7b0f5535/actgangeneratefunctiona53ea69drepo"]
