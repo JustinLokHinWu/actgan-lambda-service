@@ -24,7 +24,7 @@ def lambda_handler(event, context):
     try:
         models = s3.list_objects_v2(Bucket=bucket_name, Prefix='{}/G_jit_epoch_'.format(dataset))["Contents"]
     except:
-        print('Failed to get config for dataset "{}" from S3'.format(dataset))
+        print('Failed to get model files for dataset "{}" from S3'.format(dataset))
         return {
             'statusCode': 400,
             'body': json.dumps('Invalid dataset query parameter')
