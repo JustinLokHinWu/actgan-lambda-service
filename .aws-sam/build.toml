@@ -19,15 +19,6 @@ manifest_hash = ""
 packagetype = "Zip"
 functions = ["ActganGetClassesFunction"]
 
-[function_build_definitions.73db2368-e77c-4a20-a0da-d4ad2e2ec8ba]
-packagetype = "Image"
-functions = ["ActganGenerateFunction"]
-
-[function_build_definitions.73db2368-e77c-4a20-a0da-d4ad2e2ec8ba.metadata]
-Dockerfile = "Dockerfile"
-DockerContext = "C:\\Users\\justi\\Documents\\Projects\\actgan-lambda\\actgan-lambda-service\\generate_function"
-DockerTag = "python3.9-v1"
-
 [function_build_definitions.86572cb4-7824-40f7-a679-215fa6d81e5f]
 codeuri = "C:\\Users\\justi\\Documents\\Projects\\actgan-lambda\\actgan-lambda-service\\get_epochs_function"
 runtime = "python3.9"
@@ -36,5 +27,14 @@ handler = "get_epochs.lambda_handler"
 manifest_hash = ""
 packagetype = "Zip"
 functions = ["ActganGetEpochsFunction"]
+
+[function_build_definitions.dfcc3b4a-3693-4d10-9150-8ab6d4c5c39d]
+packagetype = "Image"
+functions = ["ActganGenerateFunction"]
+
+[function_build_definitions.dfcc3b4a-3693-4d10-9150-8ab6d4c5c39d.metadata]
+Dockerfile = "Dockerfile"
+DockerContext = "C:\\Users\\justi\\Documents\\Projects\\actgan-lambda\\actgan-lambda-service\\generate_function"
+DockerTag = "python3.9-v1"
 
 [layer_build_definitions]

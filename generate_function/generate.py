@@ -3,8 +3,15 @@ import io
 import base64
 import torch
 import torchvision
-from pathlib import Path
-# from helpers import generate_noise, label_to_onehot
+import os
+import boto3
+
+cors_header = {
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET'
+}
+
 def label_to_onehot(label, num_classes):
     encoding = torch.zeros((1, num_classes))
     encoding[0, label] = 1
@@ -14,92 +21,148 @@ def label_to_onehot(label, num_classes):
 def generate_noise(noise_size):
     n = torch.randn(1, noise_size)
     return n
-# You can reference EFS files by including your local mount path, and then
-# treat them like any other file. Local invokes may not work with this, however,
-# as the file/folders may not be present in the container.
-FILE = Path("/mnt/lambda/file")
+
+def transform_image(image):
+    return (image / 2.0) + 0.5
 
 def lambda_handler(event, context):
-    # probabilities = model.forward(image_transforms(np.array(image)).reshape(-1, 1, 28, 28))
-    # label = torch.argmax(probabilities).item()
+    # Query string validation
+    if event['queryStringParameters'] != None:
+        if 'dataset' in event['queryStringParameters']:
+            dataset = event['queryStringParameters']['dataset']
+        else:
+            print('Missing "dataset" query parameter')
+            return {
+                'header': cors_header,
+                'statusCode': 400,
+                'body': json.dumps('Missing dataset query parameter')
+            }
+
+        if 'class_id' in event['queryStringParameters']:
+            class_id = int(event['queryStringParameters']['class_id'])
+        else:
+            print('Missing "class_id" query parameter')
+            return {
+                'header': cors_header,
+                'statusCode': 400,
+                'body': json.dumps('Missing class_id query parameter')
+            }
+
+        if 'epoch' in event['queryStringParameters']:
+            epoch = int(event['queryStringParameters']['epoch'])
+        else:
+            print('Missing "epoch" query parameter')
+            return {
+                'header': cors_header,
+                'statusCode': 400,
+                'body': json.dumps('Missing epoch query parameter')
+            }
+
+        if 'seed' in event['queryStringParameters']:
+            seed = int(event['queryStringParameters']['seed'])
+        else:
+            print('Missing "seed" query parameter')
+            return {
+                'header': cors_header,
+                'statusCode': 400,
+                'body': json.dumps('Missing seed query parameter')
+            }
+    else:
+        print('Missing query parameters')
+        return {
+            'header': cors_header,
+            'statusCode': 400,
+            'body': json.dumps('Missing query parameters')
+        }
+    
+    # S3 Login
     try:
-        print('Reading config')
-        model_file = 'models/cifar/G_jit_epoch_180'
-        with open('configs/cifar.json') as f:
-            cfg = json.load(f)
+        bucket_name = os.environ['AWS_BUCKET_NAME']
+        s3 = boto3.client('s3')
     except:
-        print('Failed to load config')
+        print('Failed to access S3 bucket')
+        return {
+            'header': cors_header,
+            'statusCode': 500,
+        }
 
-    # model_runner = GeneratorRunner(AttrDict(config['model_params']))
-
-    # model = ACGAN_Generator(config['model_params'])
-    # model.load_state_dict(torch.load(model_file))
-    # model.eval()
-
+    # Open config file
     try:
-        print('Evaluating model')
-        image_class = 0
+        config_object = s3.get_object(
+            Bucket=bucket_name, Key="{}/config.json".format(dataset))
+    except:
+        print('Failed to get config for dataset "{}" from S3'.format(dataset))
+        return {
+            'header': cors_header,
+            'statusCode': 400,
+            'body': json.dumps('Invalid dataset query parameter')
+        }
+    # Load config
+    try:
+        config = json.loads(config_object['Body'].read().decode())
+    except:
+        print('Failed to read config as json')
+        return {
+            'header': cors_header,
+            'statusCode': 500,
+        }
 
-        noise = generate_noise(cfg['model_params']['noise_size'])
-        onehot = label_to_onehot(image_class, cfg['model_params']['n_classes'])
+    # Fetch model file
+    try:
+        model_key = '{}/G_jit_epoch_{}'.format(dataset, epoch)
+        model_object = s3.get_object(Bucket=bucket_name, Key=model_key)['Body']
+    except:
+        print('Failed to get model object for dataset "{}" epoch "{}" from S3'
+            .format(dataset, epoch))
+        return {
+            'header': cors_header,
+            'statusCode': 400,
+            'body': json.dumps(
+                'Invalid combination of dataset and epoch query parameters')
+        }
 
+    # Run model and apply transform
+    try:
+        torch.manual_seed(seed)
+        noise = generate_noise(config['model_params']['noise_size'])
+        onehot = label_to_onehot(class_id, config['model_params']['n_classes'])
 
-        model = torch.jit.load(model_file, map_location=torch.device('cpu'))
+        model = torch.jit.load(model_object, map_location=torch.device('cpu'))
         model.eval()
 
-        result = model(noise, onehot)
+        result = transform_image(model(noise, onehot))
     except:
         print('Failed to run model')
-    # result = model_runner.evaluate(0,100,4234)
+        return {
+            'header': cors_header,
+            'statusCode': 500
+        }
 
-    # print(result)
-
-
+    # Convert result tensor to bytestream
     try:
-        print('Converting result to bytestream')
         result_io = io.BytesIO()
-        torchvision.utils.save_image(result, result_io, 'JPEG', quality=70)
-        # # result.save(result_io, 'JPEG', quality=70)
+        torchvision.utils.save_image(result, result_io, 'JPEG', quality=95)
         result_io.seek(0)
     except:
         print("Failed to convert output to bytestream")
+        return {
+            'header': cors_header,
+            'statusCode': 500
+        }
     
     return {
-        'headers': { "Content-type": "image/jpeg" },
+        'headers': cors_header | {"Content-type": "image/jpeg"},
         'statusCode': 200,
         'body': base64.b64encode(result_io.getvalue()).decode('utf-8'),
         'isBase64Encoded': True
     }
 
-    # return {
-    #     'headers': {},
-    #     'statusCode': 200,
-    #     'body': model.code
-    # }
-
-
-
-
-
-    # wrote_file = False
-    # contents = None
-    # # The files in EFS are not only persistent across executions, but if multiple
-    # # Lambda functions are mounted to the same EFS file system, you can read and
-    # # write files from either function.
-    # if not FILE.is_file():
-    #     with open(FILE, 'w') as f:
-    #         contents = "Hello, EFS!\n"
-    #         f.write(contents)
-    #         wrote_file = True
-    # else:
-    #     with open(FILE, 'r') as f:
-    #         contents = f.read()
-    # return {
-    #     "statusCode": 200,
-    #     "body": json.dumps({
-    #         "file_contents": contents,
-    #         "created_file": wrote_file
-    #     }),
-    # }
 if __name__=='__main__':
-    print(lambda_handler(0,0))
+    print(lambda_handler({
+        "queryStringParameters": {
+            "class_id": 5,
+            "epoch": 180,
+            "dataset": "cifar",
+            "seed": 4129820
+        }
+    }, 0))

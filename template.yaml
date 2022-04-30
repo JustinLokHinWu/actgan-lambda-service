@@ -25,6 +25,10 @@ Resources:
       PackageType: Image
       Architectures:
         - x86_64
+      MemorySize: 512
+      Policies:
+        - S3ReadPolicy:
+            BucketName: actgan-models
       Events:
         GenerateEvent:
           Type: Api
@@ -32,6 +36,19 @@ Resources:
             RestApiId: !Ref ApiGatewayApi
             Path: /generate
             Method: get
+            RequestParameters:
+            - method.request.querystring.dataset:
+                Caching: true
+                Required: true
+            - method.request.querystring.epoch:
+                Caching: true
+                Required: true
+            - method.request.querystring.class_id:
+                Caching: true
+                Required: true
+            - method.request.querystring.seed:
+                Caching: true
+                Required: true
     Metadata:
       Dockerfile: Dockerfile
       DockerContext: ./generate_function
